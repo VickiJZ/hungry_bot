@@ -1,0 +1,21 @@
+{
+  "name": "hungry_bot",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "*",
+    "@langchain/mcp-adapters": "*",
+    "@langchain/langgraph": "*",
+    "@langchain/openai": "*",
+    "@langchain/google-genai": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20"
+  }
+}
