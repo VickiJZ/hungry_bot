@@ -8,14 +8,15 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "*",
-    "@langchain/mcp-adapters": "*",
+    "@langchain/google-genai": "*",
     "@langchain/langgraph": "*",
+    "@langchain/mcp-adapters": "*",
     "@langchain/openai": "*",
-    "@langchain/google-genai": "*"
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "dotenv": "^16.5.0"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20"
+    "@types/node": "^20",
+    "typescript": "^5"
   }
 }

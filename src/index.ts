@@ -1,20 +1,25 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
 import { spawn } from "child_process";
-import { Client, StdioClientTransport } from "@modelcontextprotocol/sdk/client/index.js";
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { loadMcpTools } from "@langchain/mcp-adapters";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 async function spawnLocal(cmd: string, args: string[]) {
-  const proc = spawn(cmd, args, { stdio: ["pipe", "pipe", "inherit"] });
-  const transport = new StdioClientTransport(proc.stdin!, proc.stdout!);
-  const c = new Client({ name: cmd });
+  const transport = new StdioClientTransport({ command: cmd, args: args });
+  const c = new Client({ name: cmd, version: "0.0.1" });
   await c.connect(transport);
   return c;
 }
 
 export async function createDiningAgent() {
-  const eaterPath = process.env.EATER_SERVER_PATH || "dist/eater-server.js";
-  const resyPath = process.env.RESY_SERVER_PATH || "dist/resy-server.js";
+  const eaterPath = process.env.EATER_SERVER_PATH || "/Users/pmv/gitWorkspace/eater_mcp/dist/index.js";
+  const resyPath = process.env.RESY_SERVER_PATH || "/Users/pmv/gitWorkspace/resy_mcp/dist/index.js";
 
   const eaterClient = await spawnLocal("node", [eaterPath]);
   const resyClient = await spawnLocal("node", [resyPath]);
@@ -27,22 +32,27 @@ export async function createDiningAgent() {
 You are an NYC dining concierge.
 
 Guidelines:
-• If the user asks only "Does Restaurant X have a table …" call *check_resy_availability* once and return the result.
+• If the user asks only "Does Restaurant X have a table …" call *resy_search* once and return the result.
 
-• If the user asks for "new/hot restaurants that ARE available …":
-    1. call *search_new_restaurants*
-    2. loop over candidates with *check_resy_availability*
-    3. answer with the first 3 that have at least one slot.
+• If the user asks for "new/hot/ramen restaurants that ARE available at a given date or time":
+    1. if time is not specified, ask for it, otherwise use the given time
+    2. call *eater_search* with associted keyword (i.e. new/hot/ramen)
+    3. loop over candidates with *resy_search*
+    4. answer with the first 3 that have at least one slot.
 
 • Example flows:
     - Case A: When asked for recommendations about burger places, call *eater_search* with keyword "burger".
     - Case B: If asked to find a ramen place with a table for 4 on a date, first confirm the time. Then call *eater_search* with "ramen"; use *resy_search* with the returned list, table size, date and time, and report the availability.
     - Case C: If asked to confirm a specific restaurant's table at a given time and date, call *resy_search* with restaurant name, size, date and time and return that answer.
 
-Return concise bullet points.`;
+Return concise bullet points with restaurant name and availability.`;
 
   const agent = createReactAgent({
-    llm: new ChatGoogleGenerativeAI({ modelName: "gemini-2.5", temperature: 0 }),
+    llm: new ChatGoogleGenerativeAI({
+      model: "gemini-2.5-flash-preview-04-17",
+      temperature: 0,
+      apiKey: process.env.GOOGLE_API_KEY,
+    }),
     tools,
     systemPrompt: SYSTEM,
   });
